@@ -1,15 +1,14 @@
 import streamlit as st
 from io import BytesIO
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
 from datetime import datetime
 
-# Check whether reportlab is available
 try:
-    import reportlab
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
     REPORTLAB_AVAILABLE = True
 except ImportError:
     REPORTLAB_AVAILABLE = False
+
 
 # ---------------------------------------------------------
 # Helper functions for scoring
