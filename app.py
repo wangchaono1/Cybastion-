@@ -2,6 +2,7 @@ import streamlit as st
 from io import BytesIO
 from datetime import datetime
 
+# Try to import reportlab for PDF generation
 try:
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4
@@ -241,6 +242,9 @@ def generate_pdf(all_answers: dict, section_scores: dict, overall: float, label:
     Generate a PDF report with overall score, section scores and questionnaire answers.
     Returns a BytesIO buffer containing the PDF.
     """
+    from reportlab.pdfgen import canvas  # safe: only called if REPORTLAB_AVAILABLE is True
+    from reportlab.lib.pagesizes import A4
+
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
@@ -320,12 +324,31 @@ def generate_pdf(all_answers: dict, section_scores: dict, overall: float, label:
     buffer.seek(0)
     return buffer
 
+
 # ---------------------------------------------------------
 # Streamlit UI
 # ---------------------------------------------------------
 
 def main():
     st.set_page_config(page_title="Cyber Security Scoring", layout="centered")
+
+    # ---------- SIMPLE ACCESS CODE GATE ----------
+    ACCESS_CODE = "Cybastion2025"  # <-- change this for your clients
+
+    st.markdown(
+        "<h2 style='text-align:center; margin-top:0;'>Secure Access</h2>",
+        unsafe_allow_html=True,
+    )
+
+    user_code = st.text_input(
+        "Enter the access code to continue:",
+        type="password",
+        help="This assessment is restricted to authorised clients only.",
+    )
+
+    if user_code != ACCESS_CODE:
+        st.warning("Please enter the correct access code to access the assessment.")
+        st.stop()
 
     # ---------- Custom CSS ----------
     st.markdown(
@@ -403,14 +426,12 @@ def main():
     header_cols = st.columns([1, 2, 1])
 
     with header_cols[0]:
-        # Placeholder for Cybastion logo
         st.markdown(
             "<div style='margin-top: 0.4rem; font-weight: 700; font-size: 1.1rem;'>Cybastion</div>",
             unsafe_allow_html=True,
         )
 
     with header_cols[2]:
-        # Placeholder for Riskare logo
         st.markdown(
             "<div style='text-align: right; margin-top: 0.4rem; font-weight: 700; font-size: 1.1rem;'>Riskare</div>",
             unsafe_allow_html=True,
@@ -434,7 +455,7 @@ def main():
             font-size: 0.95rem;
         ">
             <strong>About this assessment</strong><br/>
-            This cyber security scoring app provides an general view of your organisation's cyber security posture,
+            This cyber security scoring app provides an indicative view of your organisation's cyber security posture,
             based on governance, technical controls, incident preparedness and user awareness.
         </div>
         """,
@@ -443,9 +464,9 @@ def main():
 
     st.write(
         """
-- **Questionnaire**: Complete the questions about your organisation.  
-- **Cyber Security Score Calculation**: Click the button to compute your cyber security score.  
-- **Export PDF Report**: Download a PDF summary of your responses and score.
+- **Section 1 – Questionnaire**: Complete the questions about your organisation.  
+- **Section 2 – Cyber Security Score Calculation**: Click the button to compute your cyber security score.  
+- **Section 3 – Export PDF Report**: Download a PDF summary of your responses and score.
         """
     )
 

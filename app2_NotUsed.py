@@ -1,11 +1,10 @@
 import streamlit as st
 from io import BytesIO
+from datetime import datetime
 
-# Try to import reportlab for PDF generation
 try:
-    from reportlab.lib.pagesizes import A4
     from reportlab.pdfgen import canvas
-
+    from reportlab.lib.pagesizes import A4
     REPORTLAB_AVAILABLE = True
 except ImportError:
     REPORTLAB_AVAILABLE = False
@@ -246,59 +245,80 @@ def generate_pdf(all_answers: dict, section_scores: dict, overall: float, label:
     c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
 
-    y = height - 50
+    # Fixed timestamp for this report
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    def draw_header_footer():
+        """Draw Cybastion/Riskare header and footer with date & confidentiality."""
+        # Header
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(40, height - 40, "Cybastion")
+        c.drawRightString(width - 40, height - 40, "Riskare")
+
+        # Footer
+        footer_y = 30
+        c.setFont("Helvetica", 8)
+        c.drawString(40, footer_y, f"Generated on {timestamp}")
+        c.drawRightString(width - 40, footer_y, "Confidential – for internal use only")
+
+    # First page header/footer
+    draw_header_footer()
 
     # Title
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, y, "Cyber Security Assessment Report")
-    y -= 25
+    y = height - 80
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(40, y, "Cyber Security Assessment Report")
 
-    # Overall score
+    y -= 30
     c.setFont("Helvetica", 11)
-    c.drawString(50, y, f"Overall score: {overall:.1f} / 100  ({label})")
+    c.drawString(40, y, f"Overall Score: {overall:.1f} / 100 ({label})")
     y -= 20
 
     # Section scores
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(50, y, "Section scores")
+    c.drawString(40, y, "Section Scores")
     y -= 18
+
     c.setFont("Helvetica", 10)
     for sec in sorted(section_scores.keys()):
-        c.drawString(60, y, f"Section {sec}: {section_scores[sec]:.1f} / 100")
+        c.drawString(50, y, f"Section {sec}: {section_scores[sec]:.1f} / 100")
         y -= 14
-        if y < 70:
+
+        if y < 80:
             c.showPage()
-            y = height - 50
+            draw_header_footer()
+            y = height - 80
             c.setFont("Helvetica", 10)
 
-    y -= 10
-
     # Questionnaire responses
+    y -= 10
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(50, y, "Questionnaire responses")
+    c.drawString(40, y, "Questionnaire Responses")
     y -= 18
-    c.setFont("Helvetica", 9)
 
+    c.setFont("Helvetica", 9)
     for key, value in all_answers.items():
         if isinstance(value, list):
             display_value = ", ".join(value) if value else "None"
         else:
-            display_value = value if value not in (None, "") else "None"
+            display_value = value if value not in ("", None) else "None"
 
-        text = f"{key}: {display_value}"
-        for line in _wrap_text(text, max_chars=95):
-            c.drawString(60, y, line)
+        text_line = f"{key}: {display_value}"
+
+        for line in _wrap_text(text_line, max_chars=95):
+            c.drawString(50, y, line)
             y -= 12
+
             if y < 60:
                 c.showPage()
-                y = height - 50
+                draw_header_footer()
+                y = height - 80
                 c.setFont("Helvetica", 9)
 
     c.showPage()
     c.save()
     buffer.seek(0)
     return buffer
-
 
 # ---------------------------------------------------------
 # Streamlit UI
